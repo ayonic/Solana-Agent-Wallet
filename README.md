@@ -247,7 +247,7 @@ Implement the transaction construction in `src/protocols/` and call `wallet.sign
 
 ## Requirements Mapping
 
-This section maps the project features to the bounty requirements for an agentic wallet prototype.
+This section maps the project features the requirements for an agentic wallet prototype.
 
 - **Programmatic wallet creation**
   - Implemented by `WalletRegistry` and `AgentWallet` in [`src/wallet`] (/solana-agent-wallet/src/wallet).
