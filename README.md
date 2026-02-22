@@ -15,7 +15,7 @@ An autonomous AI agent wallet prototype for Solana — built for devnet, designe
 │  │  TradingAgent │  │  TradingAgent │  │LiquidityAgent │  │
 │  │    (Alpha)    │  │    (Beta)     │  │    (Gamma)    │  │
 │  └──────┬────────┘  └──────┬────────┘  └──────┬────────┘  │
-│         │                  │                  │          │
+│         │                  │                  │           │
 │  ┌──────▼────────┐  ┌──────▼────────┐  ┌──────▼────────┐  │
 │  │  AgentWallet  │  │  AgentWallet  │  │  AgentWallet  │  │
 │  │  (isolated)   │  │  (isolated)   │  │  (isolated)   │  │
