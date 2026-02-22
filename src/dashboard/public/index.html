@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Agentic Wallet - Dashboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #00ffcc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #00ff00;
+            margin-right: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: #00ffcc;
+        }
+
+        .metric-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .agent-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .agent-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .agent-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .agent-state {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .state-active {
+            background-color: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+        }
+
+        .state-inactive {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+        }
+
+        .agent-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .last-updated {
+            text-align: right;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .transactions-table th {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #2a2a2a;
+            color: #00d4ff;
+        }
+
+        .transactions-table td {
+            padding: 10px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .transactions-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .agent-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .agent-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span class="status-indicator"></span>Solana Agentic Wallet Dashboard</h1>
+            <div id="connection-status">Connected</div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Agents</div>
+                </div>
+                <div class="metric-value" id="total-agents">0</div>
+                <div class="metric-label">Active Agents</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Balance</div>
+                </div>
+                <div class="metric-value" id="total-balance">0.0000</div>
+                <div class="metric-label">SOL Across All Wallets</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Transactions</div>
+                </div>
+                <div class="metric-value" id="total-transactions">0</div>
+                <div class="metric-label">Confirmed Transactions</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Success Rate</div>
+                </div>
+                <div class="metric-value" id="success-rate">0%</div>
+                <div class="metric-label">Successful Transactions</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Balance Distribution</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="balance-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="agent-list" id="agents-container">
+            <!-- Agent cards will be populated here -->
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Recent Transactions</div>
+            </div>
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-body">
+                    <!-- Transaction rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="last-updated" id="last-updated">Last updated: Just now</div>
+    </div>
+
+    <script>
+        // Connect to Socket.IO server
+        const socket = io();
+        
+        // Chart instances
+        let balanceChart = null;
+        
+        // DOM Elements
+        const totalAgentsEl = document.getElementById('total-agents');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const totalTransactionsEl = document.getElementById('total-transactions');
+        const successRateEl = document.getElementById('success-rate');
+        const agentsContainer = document.getElementById('agents-container');
+        const transactionsBody = document.getElementById('transactions-body');
+        const lastUpdatedEl = document.getElementById('last-updated');
+        
+        // Initialize charts
+        function initCharts() {
+            const ctx = document.getElementById('balance-chart').getContext('2d');
+            balanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'SOL Balance',
+                        data: [],
+                        backgroundColor: 'rgba(0, 212, 255, 0.6)',
+                        borderColor: 'rgba(0, 212, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#aaa'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#aaa'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update dashboard with initial data
+        socket.on('initial-data', (data) => {
+            updateDashboard(data);
+            updateLastUpdated();
+        });
+        
+        // Update dashboard with new data
+        socket.on('update', (data) => {
+            updateDashboard(data);
+            updateLastUpdated();
+        });
+        
+        // Update dashboard function
+        function updateDashboard(data) {
+            // Update summary metrics
+            totalAgentsEl.textContent = data.agents.length;
+            
+            const totalBalance = data.agents.reduce((sum, agent) => sum + agent.balance, 0);
+            totalBalanceEl.textContent = totalBalance.toFixed(4);
+            
+            const totalTransactions = data.agents.reduce((sum, agent) => sum + agent.txCount, 0);
+            totalTransactionsEl.textContent = totalTransactions;
+            
+            // Calculate success rate (placeholder for now)
+            const successRate = data.metrics ? 
+                data.metrics.totalTx > 0 ? 
+                    Math.round((data.metrics.confirmedTx / data.metrics.totalTx) * 100) : 0 
+                : 0;
+            successRateEl.textContent = `${successRate}%`;
+            
+            // Update agent cards
+            updateAgentCards(data.agents);
+            
+            // Update balance chart
+            updateBalanceChart(data.agents);
+            
+            // Update transactions table
+            updateTransactionsTable(data.transactions || []);
+        }
+        
+        // Update agent cards
+        function updateAgentCards(agents) {
+            agentsContainer.innerHTML = '';
+            
+            agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card';
+                
+                agentCard.innerHTML = `
+                    <div class="agent-header">
+                        <div class="agent-name">${agent.name || agent.id}</div>
+                        <div class="agent-state state-${agent.state === 'active' ? 'active' : 'inactive'}">
+                            ${agent.state.charAt(0).toUpperCase() + agent.state.slice(1)}
+                        </div>
+                    </div>
+                    <div class="agent-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Public Key</div>
+                            <div class="detail-value">${agent.publicKey.substring(0, 8)}...${agent.publicKey.substring(agent.publicKey.length - 4)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Balance</div>
+                            <div class="detail-value">${agent.balance.toFixed(4)} SOL</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Transactions</div>
+                            <div class="detail-value">${agent.txCount}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Last Activity</div>
+                            <div class="detail-value">${agent.lastActivity ? new Date(agent.lastActivity).toLocaleString() : 'Never'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                agentsContainer.appendChild(agentCard);
+            });
+        }
+        
+        // Update balance chart
+        function updateBalanceChart(agents) {
+            if (!balanceChart) return;
+            
+            const labels = agents.map(agent => agent.name || agent.id);
+            const data = agents.map(agent => agent.balance);
+            
+            balanceChart.data.labels = labels;
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.update();
+        }
+        
+        // Update transactions table
+        function updateTransactionsTable(transactions) {
+            transactionsBody.innerHTML = '';
+            
+            // For now, show placeholder transactions since the backend doesn't provide real transaction data yet
+            const placeholderTransactions = [
+                { agent: 'Alpha Trader', type: 'BUY', amount: '0.05 SOL', status: 'Confirmed', time: 'Just now' },
+                { agent: 'Beta Trader', type: 'SELL', amount: '0.03 SOL', status: 'Confirmed', time: '2 min ago' },
+                { agent: 'Gamma LP', type: 'PROVIDE_LP', amount: '0.1 SOL', status: 'Pending', time: '5 min ago' }
+            ];
+            
+            placeholderTransactions.forEach(tx => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${tx.agent}</td>
+                    <td>${tx.type}</td>
+                    <td>${tx.amount}</td>
+                    <td><span style="color: ${tx.status === 'Confirmed' ? '#00ff00' : '#ffff00'}">${tx.status}</span></td>
+                    <td>${tx.time}</td>
+                `;
+                transactionsBody.appendChild(row);
+            });
+        }
+        
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleString()}`;
+        }
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+        });
+    </script>
+</body>
+</html>

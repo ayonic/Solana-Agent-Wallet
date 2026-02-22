@@ -1,0 +1,52 @@
+{
+  "name": "solana-agent-wallet",
+  "version": "1.0.0",
+  "description": "Autonomous AI Agent Wallet System for Solana — Devnet Prototype",
+  "author": "Ayodeji Ajide",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "demo": "ts-node src/index.ts demo",
+    "observe": "ts-node src/cli/observer.ts",
+    "dashboard": "ts-node src/cli/dashboard.ts",
+    "test": "ts-node src/tests/integration.ts",
+    "clean": "node -e \"const fs=require('fs'); const paths=['dist','.agent-keys']; for (const p of paths){ if(fs.existsSync(p)){ fs.rmSync(p,{recursive:true,force:true}); }}\""
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.95.3",
+    "@types/express": "^5.0.6",
+    "@types/socket.io": "^3.0.1",
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
+    "bs58": "^5.0.0",
+    "chalk": "^4.1.2",
+    "chart.js": "^4.5.1",
+    "cli-table3": "^0.6.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.22.1",
+    "inquirer": "^8.2.6",
+    "node-cron": "^3.0.3",
+    "ora": "^5.4.1",
+    "socket.io": "^4.8.3",
+    "tweetnacl": "^1.0.3",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/bs58": "^4.0.4",
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^20.14.0",
+    "@types/node-cron": "^3.0.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "keywords": [
+    "solana",
+    "ai-agent",
+    "wallet",
+    "autonomous",
+    "web3"
+  ],
+  "license": "MIT"
+}
